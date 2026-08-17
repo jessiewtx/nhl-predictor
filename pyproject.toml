@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nhl-predictor"
+version = "0.1.0"
+description = "Leakage-safe NHL game win-probability and score prediction pipeline."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "numpy>=2.0",
+  "pandas>=2.2",
+  "requests>=2.32",
+  "scikit-learn>=1.5",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+modal = ["modal>=1.5.4"]
+
+[project.scripts]
+nhl-predictor = "nhl_predictor.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nhl_predictor"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

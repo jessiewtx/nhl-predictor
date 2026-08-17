@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NHL Predictor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#fafaf8;--white:#ffffff;--border:#e5e7eb;
+  --text:#111827;--muted:#6b7280;--hint:#9ca3af;
+  --ice:#0284c7;--ice-bg:#e0f2fe;--ice-text:#075985;--ice-border:#bae6fd;
+  --green:#1db954;--green-bg:#e8f9ef;--green-text:#15803d;--green-border:#bbf7d0;
+  --red:#dc2626;--red-bg:#fef2f2;--red-text:#991b1b;--red-border:#fecaca;
+  --amber:#ffc002;--amber-bg:#fffde7;--amber-text:#8a6000;--amber-border:#ffe57a;
+  --sans:'Plus Jakarta Sans',sans-serif;--mono:'DM Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.6;min-height:100vh;}
+
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.logo{font-family:Georgia,serif;font-size:18px;font-weight:700;letter-spacing:-.02em;}
+.logo em{color:var(--ice);font-style:normal;}
+.pill{font-family:var(--mono);font-size:10px;background:var(--ice-bg);color:var(--ice-text);padding:3px 10px;border-radius:20px;letter-spacing:.05em;margin-left:8px;}
+.topbar-right{font-family:var(--mono);font-size:11px;color:var(--hint);}
+
+.tabs{background:var(--white);display:flex;border-bottom:1px solid var(--border);padding:0 28px;overflow-x:auto;}
+.tab{font-size:12px;font-weight:700;padding:11px 16px 11px 0;color:var(--hint);margin-right:18px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--ice);border-bottom-color:var(--ice);}
+
+.main{padding:28px;max-width:1120px;margin:0 auto;}
+.page{display:none;}
+.page.active{display:block;}
+
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:24px;}
+.stat{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px 18px;}
+.stat-label{font-size:10px;font-weight:700;color:var(--hint);text-transform:uppercase;letter-spacing:.09em;margin-bottom:7px;}
+.stat-value{font-family:var(--mono);font-size:22px;font-weight:700;}
+.stat-sub{font-size:11px;color:var(--hint);margin-top:3px;font-weight:500;}
+.up{color:var(--green);}.down{color:var(--red);}
+
+.banner{border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:13px;display:flex;gap:10px;align-items:flex-start;}
+.banner-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:7px;}
+.banner-amber{background:var(--amber-bg);border:1px solid var(--amber-border);color:var(--amber-text);}
+.banner-amber .banner-dot{background:var(--amber);}
+.banner-ice{background:var(--ice-bg);border:1px solid var(--ice-border);color:var(--ice-text);}
+.banner-ice .banner-dot{background:var(--ice);}
+
+.sh{display:flex;align-items:center;justify-content:space-between;margin:26px 0 12px;}
+.sh-label{font-size:11px;font-weight:700;color:var(--hint);text-transform:uppercase;letter-spacing:.09em;}
+.sh-right{font-size:11px;color:var(--hint);}
+
+table{width:100%;border-collapse:collapse;background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+th{font-size:10px;font-weight:700;color:var(--hint);text-transform:uppercase;letter-spacing:.08em;text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);background:#fcfcfb;}
+td{padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:13px;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fcfcfb;}
+.num{font-family:var(--mono);}
+.matchup{font-weight:600;}
+.matchup .at{color:var(--hint);font-weight:400;margin:0 5px;}
+
+.tag{font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500;display:inline-block;}
+.tag-hit{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border);}
+.tag-miss{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border);}
+.tag-lean{background:var(--ice-bg);color:var(--ice-text);border:1px solid var(--ice-border);}
+
+.bar-wrap{display:flex;align-items:center;gap:8px;min-width:150px;}
+.bar{flex:1;height:6px;background:#eef0f2;border-radius:3px;overflow:hidden;}
+.bar-fill{height:100%;background:var(--ice);border-radius:3px;}
+
+.empty{background:var(--white);border:1px dashed var(--border);border-radius:10px;padding:40px 24px;text-align:center;color:var(--muted);}
+.empty strong{display:block;color:var(--text);margin-bottom:6px;font-size:15px;}
+.note{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.7;}
+footer{padding:24px 28px 40px;max-width:1120px;margin:0 auto;font-size:11px;color:var(--hint);}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">NHL <em>Predictor</em><span class="pill" id="pill">loading</span></div>
+  <div class="topbar-right" id="generated"></div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-page="today">Today</div>
+  <div class="tab" data-page="results">Results</div>
+  <div class="tab" data-page="calibration">Calibration</div>
+  <div class="tab" data-page="features">What Works</div>
+</div>
+
+<div class="main">
+  <div class="page active" id="page-today">
+    <div id="today-content"></div>
+  </div>
+
+  <div class="page" id="page-results">
+    <div class="stats-grid" id="headline"></div>
+    <div class="sh"><div class="sh-label">Recent graded predictions</div><div class="sh-right" id="recent-count"></div></div>
+    <table>
+      <thead><tr><th>Date</th><th>Matchup</th><th>Home win prob</th><th>Predicted score</th><th>Final</th><th>Result</th></tr></thead>
+      <tbody id="recent-rows"></tbody>
+    </table>
+  </div>
+
+  <div class="page" id="page-calibration">
+    <div class="banner banner-ice"><div class="banner-dot"></div>
+      <div>Calibration asks a simple question: when the model says 70%, does the home team actually win about 70% of the time? A well-calibrated model can be wrong often and still be trustworthy.</div></div>
+    <table>
+      <thead><tr><th>Predicted range</th><th>Games</th><th>Model said</th><th>Actually happened</th><th>Gap</th></tr></thead>
+      <tbody id="calibration-rows"></tbody>
+    </table>
+  </div>
+
+  <div class="page" id="page-features">
+    <div class="banner banner-amber"><div class="banner-dot"></div>
+      <div>Each row adds one group of data on top of the row above and re-runs the full walk-forward backtest. Log loss is what decides: lower is better. A feature group that does not lower it gets deleted, however sensible it sounds.</div></div>
+    <table>
+      <thead><tr><th>Configuration</th><th>Features</th><th>Accuracy</th><th>Log loss</th><th>Change</th><th>Verdict</th></tr></thead>
+      <tbody id="ablation-rows"></tbody>
+    </table>
+  </div>
+</div>
+
+<footer>
+  Predictions are generated before puck drop from data available at that moment. Hockey is high variance:
+  roughly one game in five is decided in overtime or a shootout, where the winner is close to a coin flip.
+</footer>
+
+<script>
+const fmtPct = v => (v * 100).toFixed(1) + '%';
+const fmtDate = iso => {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'2-digit'});
+};
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('page-' + tab.dataset.page).classList.add('active');
+  });
+});
+
+function renderToday(data) {
+  const box = document.getElementById('today-content');
+  if (!data.upcoming || !data.upcoming.length) {
+    box.innerHTML = `<div class="empty">
+      <strong>No games scheduled</strong>
+      The NHL regular season has not started yet. Once it does, today's slate appears here with a
+      forecast published each morning and refreshed 30 minutes before each puck drop.
+      <div class="note">In the meantime, the Results tab shows every prediction the model made across
+      five past seasons, graded against what actually happened.</div>
+    </div>`;
+    return;
+  }
+  const rows = data.upcoming.map(g => {
+    const pct = g.home_win_probability;
+    const pick = pct >= 0.5 ? g.home_team : g.away_team;
+    return `<tr>
+      <td class="num">${new Date(g.start_time_utc).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})}</td>
+      <td class="matchup">${g.away_team}<span class="at">at</span>${g.home_team}</td>
+      <td><div class="bar-wrap"><div class="bar"><div class="bar-fill" style="width:${(pct*100).toFixed(0)}%"></div></div>
+        <span class="num">${fmtPct(pct)}</span></div></td>
+      <td class="num">${g.expected_away_goals} – ${g.expected_home_goals}</td>
+      <td><span class="tag tag-lean">${pick}</span></td>
+    </tr>`;
+  }).join('');
+  box.innerHTML = `<div class="sh"><div class="sh-label">Today's slate</div>
+    <div class="sh-right">${data.upcoming.length} games</div></div>
+    <table><thead><tr><th>Start</th><th>Matchup</th><th>Home win prob</th><th>Predicted score</th><th>Lean</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+}
+
+function renderHeadline(h) {
+  const lift = h.accuracy_lift;
+  document.getElementById('headline').innerHTML = `
+    <div class="stat"><div class="stat-label">Accuracy</div>
+      <div class="stat-value">${fmtPct(h.accuracy)}</div>
+      <div class="stat-sub">${h.games_evaluated.toLocaleString()} graded games</div></div>
+    <div class="stat"><div class="stat-label">vs always-home</div>
+      <div class="stat-value ${lift > 0 ? 'up' : 'down'}">${lift > 0 ? '+' : ''}${(lift*100).toFixed(1)}pt</div>
+      <div class="stat-sub">baseline ${fmtPct(h.always_home_accuracy)}</div></div>
+    <div class="stat"><div class="stat-label">Log loss</div>
+      <div class="stat-value">${h.log_loss.toFixed(4)}</div>
+      <div class="stat-sub">lower is better</div></div>
+    <div class="stat"><div class="stat-label">Brier score</div>
+      <div class="stat-value">${h.brier_score.toFixed(4)}</div>
+      <div class="stat-sub">lower is better</div></div>
+    <div class="stat"><div class="stat-label">Goal error</div>
+      <div class="stat-value">${h.home_goal_mae.toFixed(2)}</div>
+      <div class="stat-sub">avg goals off per side</div></div>`;
+}
+
+function renderRecent(rows) {
+  document.getElementById('recent-count').textContent = rows.length + ' most recent';
+  document.getElementById('recent-rows').innerHTML = rows.map(g => `
+    <tr>
+      <td class="num">${fmtDate(g.start_time_utc)}</td>
+      <td class="matchup">${g.away_team || '?'}<span class="at">at</span>${g.home_team || '?'}</td>
+      <td><div class="bar-wrap"><div class="bar"><div class="bar-fill" style="width:${(g.home_win_probability*100).toFixed(0)}%"></div></div>
+        <span class="num">${fmtPct(g.home_win_probability)}</span></div></td>
+      <td class="num">${g.expected_away_goals} – ${g.expected_home_goals}</td>
+      <td class="num">${g.away_score} – ${g.home_score}</td>
+      <td><span class="tag ${g.correct ? 'tag-hit' : 'tag-miss'}">${g.correct ? 'hit' : 'miss'}</span></td>
+    </tr>`).join('');
+}
+
+function renderCalibration(buckets) {
+  document.getElementById('calibration-rows').innerHTML = buckets.map(b => {
+    const gap = b.actual - b.predicted;
+    const good = Math.abs(gap) < 0.05;
+    return `<tr>
+      <td class="num">${b.range}</td>
+      <td class="num">${b.games.toLocaleString()}</td>
+      <td class="num">${fmtPct(b.predicted)}</td>
+      <td class="num">${fmtPct(b.actual)}</td>
+      <td><span class="tag ${good ? 'tag-hit' : 'tag-miss'}">${gap > 0 ? '+' : ''}${(gap*100).toFixed(1)}pt</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderAblation(rows) {
+  document.getElementById('ablation-rows').innerHTML = rows.map(r => {
+    const gain = r.log_loss_gain;
+    let verdict = '<span class="tag tag-lean">baseline</span>';
+    if (gain !== null && gain !== undefined) {
+      verdict = gain > 0.001
+        ? '<span class="tag tag-hit">earns its place</span>'
+        : '<span class="tag tag-miss">no gain</span>';
+    }
+    return `<tr>
+      <td class="matchup">${r.configuration}</td>
+      <td class="num">${r.features}</td>
+      <td class="num">${fmtPct(r.accuracy)}</td>
+      <td class="num">${r.log_loss.toFixed(4)}</td>
+      <td class="num ${gain > 0 ? 'up' : (gain < 0 ? 'down' : '')}">${
+        gain === null || gain === undefined ? '—' : (gain > 0 ? '+' : '') + gain.toFixed(4)}</td>
+      <td>${verdict}</td>
+    </tr>`;
+  }).join('');
+}
+
+fetch('data/snapshot.json?' + Date.now())
+  .then(r => r.json())
+  .then(data => {
+    document.getElementById('pill').textContent = 'live';
+    document.getElementById('generated').textContent =
+      'updated ' + new Date(data.generated_at_utc).toLocaleString();
+    renderToday(data);
+    renderHeadline(data.headline);
+    renderRecent(data.recent);
+    renderCalibration(data.calibration);
+    renderAblation(data.ablation);
+  })
+  .catch(err => {
+    document.getElementById('pill').textContent = 'error';
+    document.getElementById('today-content').innerHTML =
+      `<div class="empty"><strong>Could not load predictions</strong>${err}</div>`;
+  });
+</script>
+</body>
+</html>
